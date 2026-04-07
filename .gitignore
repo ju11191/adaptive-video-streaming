@@ -1,0 +1,20 @@
+# build outputs
+build/
+build-*/
+dist/
+node_modules/
+*.tsbuildinfo
+coverage/
+playwright-report/
+test-results/
+# downloaded / generated data (fetched by scripts, never committed)
+data/
+media/
+bench/out/
+# agent transcript
+agent.log
+# misc
+.DS_Store
+.env
+*.log
+.vite/
