@@ -38,6 +38,15 @@ add_library(avs_http
 target_include_directories(avs_http PUBLIC cpp)
 target_link_libraries(avs_http PUBLIC Threads::Threads)
 
+add_library(avs_shaper cpp/shaper/trace.cpp cpp/shaper/shaper.cpp)
+target_include_directories(avs_shaper PUBLIC cpp)
+
+add_library(avs_origin_lib cpp/origin/origin.cpp)
+target_link_libraries(avs_origin_lib PUBLIC avs_http avs_shaper)
+
+add_executable(avs_origin cpp/origin/main.cpp)
+target_link_libraries(avs_origin PRIVATE avs_origin_lib)
+
 # --- tests -----------------------------------------------------------------
 if(AVS_BUILD_TESTS)
   FetchContent_Declare(googletest
@@ -49,7 +58,7 @@ if(AVS_BUILD_TESTS)
   enable_testing()
   include(GoogleTest)
   add_executable(avs_tests
-    cpp/tests/http_test.cpp)
-  target_link_libraries(avs_tests PRIVATE avs_http GTest::gtest_main)
+    cpp/tests/http_test.cpp cpp/tests/server_test.cpp cpp/tests/shaper_test.cpp)
+  target_link_libraries(avs_tests PRIVATE avs_origin_lib GTest::gtest_main)
   gtest_discover_tests(avs_tests DISCOVERY_TIMEOUT 30)
 endif()
