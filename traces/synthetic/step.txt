@@ -1,0 +1,6 @@
+# Synthetic step trace for the e2e test (authored for this project; public domain).
+# 6 Mbit/s for 20 s, then 0.6 Mbit/s for 25 s, then 6 Mbit/s for 50 s; repeats every 95 s.
+0 6
+20 0.6
+45 6
+70 6
