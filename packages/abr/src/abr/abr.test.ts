@@ -151,3 +151,17 @@ describe('registry', () => {
     expect(createAbr('bba-guard').name).toBe('bba-guard');
   });
 });
+
+describe('createAbrFromSpec', () => {
+  it('parses parameters and rejects unknown ones', async () => {
+    const { createAbrFromSpec } = await import('./registry.ts');
+    expect(createAbrFromSpec('bba').name).toBe('bba');
+    const a = createAbrFromSpec('bba:reservoirS=5,cushionS=20');
+    expect(a.name).toBe('bba:reservoirS=5,cushionS=20');
+    // reservoir 5: at 6 s of buffer, f > R_min so with last=0 and f(6)=500 -> stays 0; at 25 -> top
+    expect(a.choose(ctx({ bufferLevelS: 25.1, lastQuality: 0 }))).toBe(5);
+    expect(() => createAbrFromSpec('bba:safety=1')).toThrow();
+    expect(() => createAbrFromSpec('nope')).toThrow();
+    expect(() => createAbrFromSpec('throughput:safety=x')).toThrow();
+  });
+});
