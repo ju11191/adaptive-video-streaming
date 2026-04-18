@@ -47,6 +47,14 @@ target_link_libraries(avs_origin_lib PUBLIC avs_http avs_shaper)
 add_executable(avs_origin cpp/origin/main.cpp)
 target_link_libraries(avs_origin PRIVATE avs_origin_lib)
 
+add_library(avs_stats cpp/stats/msprt.cpp)
+target_include_directories(avs_stats PUBLIC cpp)
+
+add_executable(avs_aa_fpr cpp/bench/aa_fpr.cpp)
+target_link_libraries(avs_aa_fpr PRIVATE avs_stats)
+add_executable(avs_detect_sim cpp/bench/detect_sim.cpp)
+target_link_libraries(avs_detect_sim PRIVATE avs_stats)
+
 # --- tests -----------------------------------------------------------------
 if(AVS_BUILD_TESTS)
   FetchContent_Declare(googletest
@@ -58,7 +66,8 @@ if(AVS_BUILD_TESTS)
   enable_testing()
   include(GoogleTest)
   add_executable(avs_tests
-    cpp/tests/http_test.cpp cpp/tests/server_test.cpp cpp/tests/shaper_test.cpp)
-  target_link_libraries(avs_tests PRIVATE avs_origin_lib GTest::gtest_main)
+    cpp/tests/http_test.cpp cpp/tests/server_test.cpp cpp/tests/shaper_test.cpp
+    cpp/tests/stats_test.cpp)
+  target_link_libraries(avs_tests PRIVATE avs_origin_lib avs_stats GTest::gtest_main)
   gtest_discover_tests(avs_tests DISCOVERY_TIMEOUT 30)
 endif()
