@@ -1,0 +1,14 @@
+{
+  "name": "@avs/collector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@avs/abr": "*",
+    "kafkajs": "^2.2.4"
+  }
+}
