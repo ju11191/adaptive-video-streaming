@@ -1,0 +1,5 @@
+# Synthetic trace for the Playwright e2e test (authored for this project; public domain).
+# 8 Mbit/s for 15 s, 0.4 Mbit/s for 20 s, then 8 Mbit/s (last sample holds 20 s; period 55 s).
+0 8
+15 0.4
+35 8
