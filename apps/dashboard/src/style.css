@@ -1,0 +1,87 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f4f1;
+  --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --muted: #6b6a66;
+  --border: #e0dfd9;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --good: #1f7a3a;
+  --bad: #c0362c;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface-1: #1a1a19;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --muted: #9b9a93;
+    --border: #33322f;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --good: #5cc27a;
+    --bad: #ef6b60;
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface-1: #1a1a19;
+  --text-primary: #f0efec;
+  --text-secondary: #c3c2b7;
+  --muted: #9b9a93;
+  --border: #33322f;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --good: #5cc27a;
+  --bad: #ef6b60;
+}
+body { margin: 0; background: var(--bg); }
+.app { max-width: 1100px; margin: 0 auto; padding: 16px; }
+header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+h1 { font-size: 20px; margin: 4px 0; }
+h2 { font-size: 15px; margin: 18px 0 8px; color: var(--text-secondary); font-weight: 600; }
+.muted { color: var(--muted); font-size: 12px; }
+.small { font-size: 12px; line-height: 1.5; }
+button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); cursor: pointer; }
+.banner { margin: 14px 0; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-1); line-height: 1.5; }
+.banner.bad { border-color: var(--bad); }
+.banner.bad strong { color: var(--bad); }
+.banner.good { border-color: var(--good); }
+.banner.good strong { color: var(--good); }
+.banner.warn { border-color: var(--series-2); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.card-title { font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: baseline; }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 13px; }
+dt { color: var(--text-secondary); }
+dd { margin: 0; font-variant-numeric: tabular-nums; }
+.table-wrap { overflow-x: auto; background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { color: var(--text-secondary); font-weight: 600; }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 12px; margin-top: 12px; }
+@media (max-width: 480px) { .charts { grid-template-columns: 1fr; } }
+.chart { position: relative; margin: 0; background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+.chart figcaption { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.chart .legend { font-weight: 400; display: flex; gap: 10px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .grid { stroke: var(--border); stroke-width: 1; }
+.chart .reference { stroke: var(--text-secondary); stroke-width: 1; stroke-dasharray: 4 3; }
+.chart .crosshair { stroke: var(--muted); stroke-width: 1; }
+.chart .ring { stroke: var(--surface-1); stroke-width: 2; }
+.chart .axis { fill: var(--muted); font-size: 10px; }
+.chart .label { fill: var(--text-primary); font-size: 10px; }
+.chart .empty { padding: 40px 0; text-align: center; color: var(--muted); font-size: 13px; }
+.tooltip { position: absolute; top: 34px; transform: translateX(-50%); pointer-events: none; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-size: 12px; box-shadow: 0 2px 8px rgb(0 0 0 / 0.12); white-space: nowrap; }
+footer { margin-top: 16px; }
