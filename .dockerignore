@@ -1,0 +1,10 @@
+**/node_modules
+build
+media
+data
+bench/out
+.git
+**/dist
+test-results
+playwright-report
+agent.log

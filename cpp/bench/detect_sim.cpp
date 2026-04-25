@@ -8,7 +8,7 @@
 // time from the start of the experiment to the first rejection. The grid runs every
 // (rate, effect) pair.
 //
-//   avs_detect_sim --dist empirical:bench/out/startup_samples.txt --cap 10000 \
+//   avs_detect_sim --dist empirical:bench/out/startup_samples.txt --cap 10000
 //     --rates 5,10,20,50 --effects 0,100,300,500 --runs 200 --horizon-s 3600 --tau 250
 //     [--inclusion cohort|completion]
 #include <algorithm>

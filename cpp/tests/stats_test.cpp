@@ -98,7 +98,9 @@ TEST(Msprt, PValueMonotoneCiNestedAndDecisionSticky) {
     EXPECT_LE(s.p_value, p);
     EXPECT_GE(s.ci_lo, lo);
     EXPECT_LE(s.ci_hi, hi);
-    if (rejected) EXPECT_EQ(s.decision, Decision::kReject);
+    if (rejected) {
+      EXPECT_EQ(s.decision, Decision::kReject);
+    }
     rejected = s.decision == Decision::kReject;
     p = s.p_value;
     lo = s.ci_lo;

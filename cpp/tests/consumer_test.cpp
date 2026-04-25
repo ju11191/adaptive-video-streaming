@@ -12,9 +12,15 @@ namespace {
 
 std::string ev(const std::string& type, const std::string& sid, const std::string& arm,
                std::int64_t ts, int seq, const std::string& extra = "") {
-  return R"({"v":1,"type":")" + type + R"(","sid":")" + sid + R"(","exp":"e1","arm":")" + arm +
-         R"(","ts":)" + std::to_string(ts) + R"(,"seq":)" + std::to_string(seq) +
-         (extra.empty() ? "" : "," + extra) + "}";
+  // Built with append() rather than chained operator+ to dodge GCC 12's -Wrestrict false
+  // positive (GCC bug 105329).
+  std::string s = R"({"v":1,"type":")";
+  s.append(type).append(R"(","sid":")").append(sid).append(R"(","exp":"e1","arm":")");
+  s.append(arm).append(R"(","ts":)").append(std::to_string(ts)).append(R"(,"seq":)");
+  s.append(std::to_string(seq));
+  if (!extra.empty()) s.append(",").append(extra);
+  s.append("}");
+  return s;
 }
 
 Event parse(const std::string& s) {
@@ -174,13 +180,14 @@ TEST(Aggregator, DetectsInjectedStartupRegressionAndRecordsWhen) {
   std::int64_t wall = T0;
   int i = 0;
   while (agg.startup_snapshot().decision == avs::stats::Decision::kContinue && i < 20000) {
-    std::string sid = "s" + std::to_string(i);
+    std::string sid = "s";
+    sid += std::to_string(i);
     std::string arm = (i % 2) ? "B" : "A";
     double x = d(rng) + (arm == "B" ? 600.0 : 0.0);
     agg.ingest(parse(ev("session_start", sid, arm, t, 0, R"("abr":"x")")), wall);
-    agg.ingest(parse(ev("startup", sid, arm, t + static_cast<std::int64_t>(x), 1,
-                        "\"startupMs\":" + std::to_string(x))),
-               wall);
+    std::string payload = "\"startupMs\":";
+    payload += std::to_string(x);
+    agg.ingest(parse(ev("startup", sid, arm, t + static_cast<std::int64_t>(x), 1, payload)), wall);
     t += 50;
     wall += 50;
     ++i;
