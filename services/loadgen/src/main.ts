@@ -86,7 +86,7 @@ let nextArrival = start + gap();
 const log = (msg: string) => process.stderr.write(`[loadgen ${((Date.now() - start) / 1000).toFixed(0)}s] ${msg}\n`);
 log(
   `rate ${rate}/s for ${durationS}s, arms ${cfg.arms.map((a) => `${a.name}:${a.abr}`).join(',')}, ` +
-    `inject ${JSON.stringify(cfg.inject)} from +${((cfg.injectAtMs - start) / 1000).toFixed(0)}s, speedup ${cfg.speedup}, ` +
+    `inject ${JSON.stringify(cfg.inject)} from +${Math.max(0, (cfg.injectAtMs - start) / 1000).toFixed(0)}s, speedup ${cfg.speedup}, ` +
     `${traces.length} traces, ${dryRun ? 'dry-run' : collector}`,
 );
 
