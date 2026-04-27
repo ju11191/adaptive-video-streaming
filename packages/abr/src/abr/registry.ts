@@ -1,9 +1,10 @@
 import { BbaRule } from './bba.ts';
 import { Bba1Rule } from './bba1.ts';
+import { BolaERule, BolaRule } from './bola.ts';
 import { ThroughputRule } from './throughput.ts';
 import type { AbrAlgorithm } from './types.ts';
 
-export const ABR_NAMES = ['throughput', 'bba', 'bba-guard', 'bba1'] as const;
+export const ABR_NAMES = ['throughput', 'bba', 'bba-guard', 'bba1', 'bola', 'bola-e'] as const;
 export type AbrName = (typeof ABR_NAMES)[number];
 
 export function isAbrName(s: string): s is AbrName {
@@ -21,6 +22,10 @@ export function createAbr(name: AbrName): AbrAlgorithm {
       return new BbaRule({ startupGuard: true });
     case 'bba1':
       return new Bba1Rule();
+    case 'bola':
+      return new BolaRule();
+    case 'bola-e':
+      return new BolaERule();
   }
 }
 
@@ -43,6 +48,8 @@ export function createAbrFromSpec(spec: string): AbrAlgorithm {
     bba: ['reservoirS', 'cushionS'],
     'bba-guard': ['reservoirS', 'cushionS', 'guardSafety'],
     bba1: ['lookaheadS', 'reservoirMinS', 'reservoirMaxS', 'cushionEndS', 'useEstimate'],
+    bola: ['qLowS', 'qMaxS', 'gammaP'],
+    'bola-e': ['qLowS', 'qMaxS', 'gammaP'],
   };
   for (const k of Object.keys(opts)) {
     if (!allowed[name].includes(k)) throw new Error(`ABR "${name}" has no parameter "${k}"`);
@@ -61,5 +68,9 @@ function build(name: AbrName, opts: Record<string, number>): AbrAlgorithm {
       return new BbaRule({ ...opts, startupGuard: name === 'bba-guard' });
     case 'bba1':
       return new Bba1Rule(opts);
+    case 'bola':
+      return new BolaRule(opts);
+    case 'bola-e':
+      return new BolaERule(opts);
   }
 }

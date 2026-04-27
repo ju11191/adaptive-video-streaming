@@ -2,6 +2,7 @@ export * from './abr/types.ts';
 export * from './abr/throughput.ts';
 export * from './abr/bba.ts';
 export * from './abr/bba1.ts';
+export * from './abr/bola.ts';
 export * from './abr/registry.ts';
 export * from './hls/parse.ts';
 export * from './experiment/assign.ts';
