@@ -28,6 +28,20 @@ export interface AbrContext {
   segmentIndex: number;
   /** False until playback has started (startup phase). */
   playing: boolean;
+  /** Real byte size of segment `index` at `rung` (VBR). Absent: use nominal kbps x duration. */
+  segmentBytes?: (rung: number, index: number) => number;
+  /** Number of segments in the presentation (bounds look-ahead). */
+  segmentCount?: number;
+  /** Player buffer cap in seconds. */
+  maxBufferS?: number;
+  /** Stalls so far in this session (cumulative). */
+  rebufferCount?: number;
+}
+
+/** Size of segment `index` at `rung` from the context, falling back to the nominal bitrate. */
+export function segmentSize(ctx: AbrContext, rung: number, index: number): number {
+  if (ctx.segmentBytes) return ctx.segmentBytes(rung, index);
+  return (ctx.ladder[rung]!.kbps * 1000 * ctx.segmentDurationS) / 8;
 }
 
 export interface AbrAlgorithm {

@@ -1,8 +1,9 @@
 import { BbaRule } from './bba.ts';
+import { Bba1Rule } from './bba1.ts';
 import { ThroughputRule } from './throughput.ts';
 import type { AbrAlgorithm } from './types.ts';
 
-export const ABR_NAMES = ['throughput', 'bba', 'bba-guard'] as const;
+export const ABR_NAMES = ['throughput', 'bba', 'bba-guard', 'bba1'] as const;
 export type AbrName = (typeof ABR_NAMES)[number];
 
 export function isAbrName(s: string): s is AbrName {
@@ -18,6 +19,8 @@ export function createAbr(name: AbrName): AbrAlgorithm {
       return new BbaRule({ startupGuard: false });
     case 'bba-guard':
       return new BbaRule({ startupGuard: true });
+    case 'bba1':
+      return new Bba1Rule();
   }
 }
 
@@ -39,14 +42,24 @@ export function createAbrFromSpec(spec: string): AbrAlgorithm {
     throughput: ['window', 'safety'],
     bba: ['reservoirS', 'cushionS'],
     'bba-guard': ['reservoirS', 'cushionS', 'guardSafety'],
+    bba1: ['lookaheadS', 'reservoirMinS', 'reservoirMaxS', 'cushionEndS', 'useEstimate'],
   };
   for (const k of Object.keys(opts)) {
     if (!allowed[name].includes(k)) throw new Error(`ABR "${name}" has no parameter "${k}"`);
   }
-  const algo: AbrAlgorithm =
-    name === 'throughput'
-      ? new ThroughputRule(opts)
-      : new BbaRule({ ...opts, startupGuard: name === 'bba-guard' });
+  const algo = build(name, opts);
   if (!params) return algo;
   return { name: spec, choose: (c) => algo.choose(c), reset: () => algo.reset() };
+}
+
+function build(name: AbrName, opts: Record<string, number>): AbrAlgorithm {
+  switch (name) {
+    case 'throughput':
+      return new ThroughputRule(opts);
+    case 'bba':
+    case 'bba-guard':
+      return new BbaRule({ ...opts, startupGuard: name === 'bba-guard' });
+    case 'bba1':
+      return new Bba1Rule(opts);
+  }
 }

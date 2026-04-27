@@ -140,6 +140,10 @@ export function simulateSession(
       throughputHistory: history,
       segmentIndex: i,
       playing,
+      segmentBytes: video.segmentBytes,
+      segmentCount: video.segmentCount,
+      maxBufferS: cfg.maxBufferS,
+      rebufferCount,
     };
     const q = clampQuality(abr.choose(ctx), video.ladder);
     const requestAt = t;
