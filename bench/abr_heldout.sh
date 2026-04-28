@@ -8,8 +8,11 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+# SPLIT_SEED (default 1, the pre-registered split) is only changed by bench/abr_heldout_seeds.sh.
+SPLIT_SEED="${SPLIT_SEED:-1}"
 OUT=bench/out/abr_heldout
-COMMON=(--traces data/traces/norway,data/traces/belgium --baseline throughput --offsets 5 --seed 1 --split-seed 1)
+if [ "$SPLIT_SEED" != 1 ]; then OUT="bench/out/abr_heldout_seed$SPLIT_SEED"; fi
+COMMON=(--traces data/traces/norway,data/traces/belgium --baseline throughput --offsets 5 --seed 1 --split-seed "$SPLIT_SEED")
 
 grid="throughput"
 for r in 8 12 16 20 24; do for c in 40 47 54; do grid+=";bba1:reservoirMinS=$r,cushionEndS=$c"; done; done
@@ -24,3 +27,16 @@ echo "== selected on train: $tuned ==" >&2
 echo "== test: held-out comparison ==" >&2
 npx tsx packages/abr/src/cli/compare.ts "${COMMON[@]}" --subset test \
   --algos "throughput;bba;bba1;bola;bola-e;$tuned" --out "$OUT/test" "$@"
+
+# Deviation recorded (before any test number was viewed): two pre-registered
+# picks hit the edge of their grid, so an extended grid is also tuned on TRAIN with the same rule
+# and reported separately on TEST. The pre-registered picks above remain the headline.
+ext="throughput"
+for r in 24 28 32; do for c in 36 40 44; do ext+=";bba1:reservoirMinS=$r,cushionEndS=$c"; done; done
+for q in 30 35 40 45 50; do ext+=";bola-e:qLowS=$q"; done
+echo "== train: extended grid (deviation) ==" >&2
+npx tsx packages/abr/src/cli/compare.ts "${COMMON[@]}" --subset train --algos "$ext" --out "$OUT/train_ext" > /dev/null
+tuned_ext="$(npx tsx packages/abr/src/cli/select.ts --results "$OUT/train_ext/results.json" --min-kbps-ratio 0.95)"
+echo "== selected on train (extended): $tuned_ext ==" >&2
+npx tsx packages/abr/src/cli/compare.ts "${COMMON[@]}" --subset test \
+  --algos "throughput;$tuned;$tuned_ext" --out "$OUT/test_ext" "$@"
