@@ -12,6 +12,8 @@ export interface Bba1Options {
   cushionEndS: number;
   /** 1: assume capacity min(R_min, harmonic-mean estimate) instead of R_min. Not in the paper. */
   useEstimate: number;
+  /** 1: ignore real segment sizes and use nominal kbps x duration (ablation of VBR awareness). */
+  nominalSizes: number;
 }
 
 export const DEFAULT_BBA1_OPTIONS: Bba1Options = {
@@ -20,6 +22,7 @@ export const DEFAULT_BBA1_OPTIONS: Bba1Options = {
   reservoirMaxS: 35,
   cushionEndS: 54,
   useEstimate: 0,
+  nominalSizes: 0,
 };
 
 /** Mean segment size (bytes) of every rung over the whole presentation. */
@@ -103,7 +106,8 @@ export class Bba1Rule implements AbrAlgorithm {
     return this.opts;
   }
 
-  choose(ctx: AbrContext): number {
+  choose(input: AbrContext): number {
+    const ctx = this.opts.nominalSizes ? { ...input, segmentBytes: undefined } : input;
     // Chunk_min / Chunk_max depend only on the content; compute once per video.
     if (this.means.length !== ctx.ladder.length || this.meansFor !== ctx.segmentBytes) {
       this.means = meanChunkBytes(ctx);

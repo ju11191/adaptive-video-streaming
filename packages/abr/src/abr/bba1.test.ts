@@ -137,6 +137,11 @@ describe('BBA-1 rate choice', () => {
     const big = (r: number, k: number) => (r === 2 && k === 0 ? nominal(2) * 2.1 : nominal(r));
     expect(choose({ bufferLevelS: 31, lastQuality: 3, segmentBytes: big })).toBe(2);
   });
+  it('nominalSizes=1 ignores the real sizes (behaves as on CBR content)', () => {
+    const vbr = { bufferLevelS: 15, lastQuality: 2, segmentBytes: scaled((k) => (k < 10 ? 1.5 : 1)) };
+    expect(new Bba1Rule().choose(ctx(vbr))).toBe(0);
+    expect(new Bba1Rule({ nominalSizes: 1 }).choose(ctx(vbr))).toBe(2);
+  });
   it('a large upcoming scene right-shifts the map through the reservoir', () => {
     // CBR: r = 8, f(15) ~ 909 kbps-equivalent, inside rung 2's band -> hold rung 2.
     expect(choose({ bufferLevelS: 15, lastQuality: 2 })).toBe(2);

@@ -4,6 +4,9 @@
  *
  *   npx tsx packages/abr/src/cli/compare.ts --traces data/traces/norway,data/traces/belgium \
  *     --algos throughput,bba,bba-guard --baseline throughput --offsets 5 --seed 1 --out bench/out/abr
+ *
+ * `--subset train|test` (with `--split-seed N`) restricts the run to one half of the stratified
+ * by-trace split and writes the split to <out>/split.json.
  */
 import fs from 'node:fs';
 import os from 'node:os';
@@ -12,6 +15,7 @@ import { createAbrFromSpec } from '../abr/registry.ts';
 import { fnv1a32 } from '../experiment/assign.ts';
 import { listTraceFiles, loadTrace, loadVideo, REPO_ROOT } from '../node.ts';
 import { simulateSession } from '../sim/simulator.ts';
+import { splitTraces } from '../stats/split.ts';
 import { bootstrapCI, type Interval, mean, mulberry32, quantile } from '../stats/stats.ts';
 import { num, parseArgs, str } from './args.ts';
 
@@ -21,14 +25,22 @@ const traceDirs = str(args, 'traces', 'data/traces/norway,data/traces/belgium')
   .map((d) => path.resolve(REPO_ROOT, d));
 // List separator is ';' when given (specs may contain ','), else ','.
 const algosArg = str(args, 'algos', 'throughput,bba,bba-guard');
-const algos = algosArg.split(algosArg.includes(';') ? ';' : ',');
+const algos = [...new Set(algosArg.split(algosArg.includes(';') ? ';' : ','))];
 const baseline = str(args, 'baseline', algos[0]!);
 const offsets = num(args, 'offsets', 5);
 const seed = num(args, 'seed', 1);
 const outDir = path.resolve(REPO_ROOT, str(args, 'out', 'bench/out/abr'));
 const ladderPath = path.resolve(REPO_ROOT, str(args, 'ladder', 'media/hls/ladder.json'));
 const resamples = num(args, 'resamples', 10000);
+const subsetArg = str(args, 'subset', 'all');
+const splitSeed = num(args, 'split-seed', 1);
 if (!algos.includes(baseline)) throw new Error('--baseline must be one of --algos');
+if (!['all', 'train', 'test'].includes(subsetArg)) throw new Error('--subset must be all, train or test');
+const split =
+  subsetArg === 'all'
+    ? null
+    : splitTraces(Object.fromEntries(traceDirs.map((d) => [path.basename(d), listTraceFiles(d).map((t) => t.name)])), splitSeed);
+const keep = split ? new Set(subsetArg === 'train' ? split.train : split.test) : null;
 
 const { video, source: videoSource } = loadVideo(ladderPath);
 const METRICS = ['rebufferRatio', 'rebufferCount', 'rebufferMs', 'avgKbps', 'switches', 'startupMs'] as const;
@@ -40,6 +52,7 @@ const t0 = Date.now();
 for (const dir of traceDirs) {
   const set = path.basename(dir);
   for (const { name, file } of listTraceFiles(dir)) {
+    if (keep && !keep.has(`${set}/${name}`)) continue;
     const trace = loadTrace(file, name);
     const rand = mulberry32(fnv1a32(`${seed}:${name}`));
     const starts = Array.from({ length: offsets }, () => rand() * trace.duration);
@@ -150,9 +163,11 @@ const meta = {
   simConfig: 'rtt 80 ms, max buffer 60 s, startup after 1 segment (4 s)',
   algos,
   baseline,
+  subset: split ? { subset: subsetArg, splitSeed } : 'all',
   elapsedMs,
 };
 fs.mkdirSync(outDir, { recursive: true });
+if (split) fs.writeFileSync(path.join(outDir, 'split.json'), JSON.stringify({ splitSeed, ...split }, null, 1));
 fs.writeFileSync(path.join(outDir, 'results.json'), JSON.stringify({ meta, comparisons, distributions, perTrace: rows }, null, 1));
 const header = ['trace', 'set', 'meanMbps', ...algos.flatMap((a) => METRICS.map((m) => `${a}.${m}`))];
 fs.writeFileSync(
@@ -168,6 +183,7 @@ const f3 = (x: number) => x.toFixed(3);
 let md = `### ABR comparison (baseline: ${baseline})\n\n`;
 md += `- command: \`${meta.command}\`\n- host: ${meta.host}\n- video: ${meta.video} (${meta.segmentCount} x 4 s segments, ladder ${meta.ladderKbps.join('/')} kbps)\n`;
 md += `- traces: ${rows.length} (${Object.entries(groups).filter(([g]) => g !== 'all').map(([g, s]) => `${g} ${s.length}`).join(', ')}), ${offsets} seeded start offsets each (seed ${seed}); ${meta.simConfig}\n`;
+if (split) md += `- subset: **${subsetArg}** half of the stratified by-trace split (split seed ${splitSeed})\n`;
 md += `- CIs: 95% paired percentile bootstrap over traces, ${resamples} resamples. "Cut" = 1 - mean(algo)/mean(${baseline}).\n- simulation wall time: ${elapsedMs} ms\n\n`;
 for (const [g, comps] of Object.entries(comparisons)) {
   md += `#### Trace set: ${g} (n = ${groups[g]!.length})\n\n`;

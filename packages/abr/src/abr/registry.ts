@@ -47,7 +47,7 @@ export function createAbrFromSpec(spec: string): AbrAlgorithm {
     throughput: ['window', 'safety'],
     bba: ['reservoirS', 'cushionS'],
     'bba-guard': ['reservoirS', 'cushionS', 'guardSafety'],
-    bba1: ['lookaheadS', 'reservoirMinS', 'reservoirMaxS', 'cushionEndS', 'useEstimate'],
+    bba1: ['lookaheadS', 'reservoirMinS', 'reservoirMaxS', 'cushionEndS', 'useEstimate', 'nominalSizes'],
     bola: ['qLowS', 'qMaxS', 'gammaP'],
     'bola-e': ['qLowS', 'qMaxS', 'gammaP'],
   };
