@@ -91,6 +91,7 @@ export function bba1Choose(ctx: AbrContext, o: Bba1Options, means: readonly numb
 
 export class Bba1Rule implements AbrAlgorithm {
   readonly name = 'bba1';
+  readonly needsSegmentSizes = true;
   private readonly opts: Bba1Options;
   private meansFor: AbrContext['segmentBytes'] | null = null;
   private means: number[] = [];

@@ -7,6 +7,7 @@ import {
   type AbrAlgorithm,
   type AbrContext,
   type EventDraft,
+  type LadderJson,
   parseMaster,
   parseMedia,
   type MediaPlaylist,
@@ -127,6 +128,27 @@ export class MsePlayer {
     const r = await fetch(this.url(u));
     if (!r.ok) throw new Error(`HTTP ${r.status} for ${u}`);
     return r.text();
+  }
+
+  /**
+   * HLS playlists carry no byte sizes, so for size-aware ABRs (BBA-1) read the packager's
+   * ladder.json sidecar next to the master playlist. Unshaped: it is metadata, like sizes in a
+   * DASH MPD's SegmentBase index. Returns null (nominal sizes) if absent or not matching the ladder.
+   */
+  private async loadSegmentSizes(ladder: readonly Rung[]): Promise<((rung: number, index: number) => number) | null> {
+    try {
+      const r = await fetch(resolveUri(this.opts.masterUrl, 'ladder.json'));
+      if (!r.ok) return null;
+      const j = (await r.json()) as LadderJson;
+      const rungs = [...j.rungs].sort((a, b) => a.kbps - b.kbps);
+      if (rungs.length !== ladder.length) return null;
+      return (q, i) => {
+        const segs = rungs[q]!.segments;
+        return segs[i % segs.length]!.bytes;
+      };
+    } catch {
+      return null;
+    }
   }
 
   bufferAheadS(): number {
@@ -270,6 +292,8 @@ export class MsePlayer {
     this.sb = this.ms.addSourceBuffer(mime);
     this.attachVideoListeners();
 
+    const segmentBytes = this.opts.abr.needsSegmentSizes ? await this.loadSegmentSizes(ladder) : null;
+    if (this.opts.abr.needsSegmentSizes) this.log(segmentBytes ? 'using ladder.json segment sizes' : 'no ladder.json: nominal sizes');
     this.opts.abr.reset();
     let lastQuality: number | null = null;
     let segmentCount = Infinity;
@@ -289,6 +313,10 @@ export class MsePlayer {
         throughputHistory: this.history,
         segmentIndex: i,
         playing: this.stats.startupMs !== null,
+        maxBufferS: this.opts.maxBufferS,
+        rebufferCount: this.stats.rebufferCount,
+        ...(Number.isFinite(segmentCount) ? { segmentCount } : {}),
+        ...(segmentBytes ? { segmentBytes } : {}),
       };
       const q = Math.max(0, Math.min(ladder.length - 1, this.opts.abr.choose(ctx)));
       const pl = await this.playlist(q);

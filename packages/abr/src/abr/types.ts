@@ -50,6 +50,8 @@ export interface AbrAlgorithm {
   choose(ctx: AbrContext): number;
   /** Clears internal state before a new session. */
   reset(): void;
+  /** True if the algorithm uses real per-segment sizes (`AbrContext.segmentBytes`). */
+  readonly needsSegmentSizes?: boolean;
 }
 
 export function sampleFrom(bytes: number, durationMs: number): ThroughputSample {

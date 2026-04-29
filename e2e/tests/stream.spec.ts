@@ -107,3 +107,40 @@ test('plays through the shaper, switches rungs up and down, and records telemetr
   expect(new Set(evs.map((e) => e.arm)).size).toBe(1);
   console.log(`telemetry: ${evs.length} events (${[...new Set(types)].join(', ')})`);
 });
+
+for (const abr of ['bba1', 'bola-e'] as const) {
+  test(`${abr} plays through the shaper in the browser`, async ({ page }) => {
+    const sid = `e2e-${abr}-${Date.now()}`;
+    const sidecar: string[] = [];
+    page.on('request', (r) => {
+      if (r.url().endsWith('/ladder.json')) sidecar.push(r.url());
+    });
+    const qs = new URLSearchParams({
+      origin: ORIGIN,
+      collector: COLLECTOR,
+      trace: 'synthetic/e2e_step',
+      abr,
+      autoplay: '1',
+      sid,
+      max_buffer: '20',
+    });
+    await page.goto(`${PLAYER}/?${qs}`);
+    await expect
+      .poll(async () => page.evaluate(() => window.__avs?.stats.startupMs ?? null), { timeout: 30_000 })
+      .not.toBeNull();
+    expect(await page.evaluate(() => window.__avs!.abr)).toBe(abr);
+    // Size-aware BBA-1 reads the packager's per-segment sizes; BOLA-E does not need them.
+    expect(sidecar.length).toBe(abr === 'bba1' ? 1 : 0);
+    await expect
+      .poll(async () => page.evaluate(() => document.querySelector('video')!.getVideoPlaybackQuality().totalVideoFrames), {
+        timeout: 60_000,
+        intervals: [1000],
+      })
+      .toBeGreaterThan(30);
+    // Downloads keep progressing (a top-rung segment can still be in flight after 1 s of playback).
+    await expect
+      .poll(async () => page.evaluate(() => window.__avs!.stats.segments.length), { timeout: 60_000, intervals: [1000] })
+      .toBeGreaterThan(2);
+    console.log(`${abr}: rung sequence ${await page.evaluate(() => window.__avs!.stats.segments.map((s) => s.quality).join(''))}`);
+  });
+}

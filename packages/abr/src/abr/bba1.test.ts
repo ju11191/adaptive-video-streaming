@@ -153,6 +153,10 @@ describe('BBA-1 rate choice', () => {
 describe('BBA-1 registry', () => {
   it('builds from a spec and validates options', () => {
     expect(createAbrFromSpec('bba1').name).toBe('bba1');
+    // The player fetches real sizes only for algorithms that declare they need them.
+    expect(createAbrFromSpec('bba1').needsSegmentSizes).toBe(true);
+    expect(createAbrFromSpec('bba1:reservoirMinS=16').needsSegmentSizes).toBe(true);
+    expect(createAbrFromSpec('bola').needsSegmentSizes).toBeFalsy();
     expect(createAbrFromSpec('bba1:reservoirMinS=16,cushionEndS=47').name).toBe('bba1:reservoirMinS=16,cushionEndS=47');
     expect(() => createAbrFromSpec('bba1:reservoirS=5')).toThrow();
     expect(() => createAbrFromSpec('bba1:cushionEndS=30')).toThrow(); // <= reservoirMaxS

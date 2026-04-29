@@ -56,7 +56,12 @@ export function createAbrFromSpec(spec: string): AbrAlgorithm {
   }
   const algo = build(name, opts);
   if (!params) return algo;
-  return { name: spec, choose: (c) => algo.choose(c), reset: () => algo.reset() };
+  return {
+    name: spec,
+    choose: (c) => algo.choose(c),
+    reset: () => algo.reset(),
+    ...(algo.needsSegmentSizes ? { needsSegmentSizes: true } : {}),
+  };
 }
 
 function build(name: AbrName, opts: Record<string, number>): AbrAlgorithm {
